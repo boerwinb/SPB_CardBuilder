@@ -502,6 +502,8 @@ Public Class frmMain
         Dim ofGames As Integer
         Dim infGames As Integer
         Dim dhGames As Integer
+        Dim phGames As Integer
+        Dim prGames As Integer
         Dim ofPosition As String
         Dim infPosition As String
         Dim dhPosition As String
@@ -658,6 +660,8 @@ Public Class frmMain
                         ofGames = 0
                         infGames = 0
                         dhGames = 0
+                        phGames = 0
+                        prGames = 0
                         pGames = 0
                         infPosition = ""
                         dhPosition = ""
@@ -745,6 +749,17 @@ Public Class frmMain
                             dhPosition += Batter.GetFieldingLine(Card.CD, CInt(colTeamGames(Batter.curTeam)))
                         Next drField
 
+                        'Determine PH, PR stats
+                        sqlQuery = "SELECT * FROM appearances WHERE playerid = '" & _
+                                    dr.Item("playerid").ToString & "' AND " & _
+                                    "teamid = '" & Batter.curTeam & "' AND " & _
+                                    "yearid = " & i.ToString
+                        dsFielding = DataAccess.ExecuteDataSet(sqlQuery)
+                        For Each drField As DataRow In dsFielding.Tables(0).Rows
+                            phGames += CheckField(drField.Item("g_ph"), 0)
+                            prGames += CheckField(drField.Item("g_pr"), 0)
+                        Next drField
+
                         Dim fieldLines() As String = {ofPosition, infPosition, dhPosition}
                         Dim fieldGames() As Integer = {ofGames, infGames, dhGames}
                         Array.Sort(fieldGames, fieldLines)
@@ -761,7 +776,10 @@ Public Class frmMain
                         'End If
 
                         If pGames > ofGames + infGames + dhGames Then
-                            Batter.curPos = "P"
+                            If (ofGames + infGames + dhGames + phGames + prGames) < 20 Then
+                                'Babe Ruth, Shohei, Brooks Kieschnick exception
+                                Batter.curPos = "P"
+                            End If
                             If league = "AL" Then
                                 colPitchersAL.Add(dr.Item("playerid").ToString)
                             Else
